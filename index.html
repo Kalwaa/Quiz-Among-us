@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Among Us - Le Quiz</title>
+    <title>Among Us - Le Quiz Complet</title>
     <style>
         body {
             background-color: #111424;
@@ -12,21 +12,23 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
         .quiz-container {
             background-color: #1b1f38;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            width: 450px;
+            width: 480px;
             text-align: center;
             border: 2px solid #ed4245;
         }
         h1 {
             color: #ed4245;
             margin-top: 0;
+            font-size: 24px;
         }
         .btn {
             background-color: #2f3556;
@@ -43,10 +45,18 @@
         .btn:hover {
             background-color: #ed4245;
         }
+        .btn-easy { border: 2px solid #57f287; }
+        .btn-normal { border: 2px solid #fec20c; }
+        .btn-hard { border: 2px solid #ed4245; }
         #result {
             font-weight: bold;
             font-size: 18px;
             margin-top: 15px;
+        }
+        .progress {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -54,44 +64,109 @@
 
 <div class="quiz-container">
     <h1 id="title">🚨 QUIZ AMONG US 🚨</h1>
-    <div id="quiz">
-        <p id="question" style="font-size: 18px; font-weight: bold;"></p>
-        <div id="options"></div>
+    <div id="setup-screen">
+        <p style="font-size: 18px;">Choisissez votre niveau de difficulté :</p>
+        <button class="btn btn-easy" onclick="startQuiz('easy')">🟢 Facile (15 questions)</button>
+        <button class="btn btn-normal" onclick="startQuiz('normal')">🟡 Normal (15 questions)</button>
+        <button class="btn btn-hard" onclick="startQuiz('hard')">🔴 Hard (20 questions très dures)</button>
     </div>
-    <div id="result"></div>
+
+    <div id="quiz-screen" style="display: none;">
+        <div class="progress" id="progress">Question 1/15</div>
+        <p id="question" style="font-size: 18px; font-weight: bold; margin-top: 5px;"></p>
+        <div id="options"></div>
+        <div id="result"></div>
+    </div>
 </div>
 
 <script>
-    const questions = [
-        {
-            q: "Quelle est la map originale d'Among Us ?",
-            options: ["The Skeld", "Mira HQ", "Polus", "The Fungle"],
-            answer: 0
-        },
-        {
-            q: "Où se trouve le bouton de l'Emergency Meeting sur The Skeld ?",
-            options: ["À l'Électricité", "À la Cafétéria", "À l'Administration", "Aux Réacteurs"],
-            answer: 1
-        },
-        {
-            q: "Quelle couleur de Crewmate est historiquement souvent accusée d'être l'Imposteur (le mème) ?",
-            options: ["Bleu", "Vert", "Rouge", "Jaune"],
-            answer: 2
-        }
-    ];
+    // BANQUE DE QUESTIONS DE TRIVIA
+    const allQuestions = {
+        easy: [
+            { q: "Quelle est la map originale du jeu ?", options: ["The Skeld", "Mira HQ", "Polus", "The Fungle"], answer: 0 },
+            { q: "Où se trouve le bouton d'Emergency sur The Skeld ?", options: ["Électricité", "Cafétéria", "Navigation", "Armurerie"], answer: 1 },
+            { q: "Quelle couleur de Crewmate est la mascotte iconique (et le mème) ?", options: ["Bleu", "Jaune", "Rouge", "Vert"], answer: 2 },
+            { q: "Combien d'imposteurs maximum peut-on mettre dans une partie classique ?", options: ["1", "2", "3", "4"], answer: 2 },
+            { q: "Que font les fantômes des Crewmates ?", options: ["Ils dorment", "Ils continuent leurs tâches", "Ils tuent l'imposteur", "Ils bloquent les portes"], answer: 1 },
+            { q: "Quel symbole apparaît à l'écran quand un cadavre est trouvé ?", options: ["Un fantôme", "Un panneau Attention", "Un mégaphone", "Un couteau"], answer: 2 },
+            { q: "Comment s'appelle la trappe que seuls les imposteurs peuvent utiliser ?", options: ["Un tunnel", "Une vent (ventilation)", "Une porte", "Un trou"], answer: 1 },
+            { q: "Quelle tâche consiste à détruire des objets qui volent sur l'écran ?", options: ["Astéroïdes", "Vider les poubelles", "Scan", "Câblage"], answer: 0 },
+            { q: "Quelle couleur de texte indique que vous êtes un gentil ?", options: ["Rouge", "Vert", "Bleu", "Jaune"], answer: 1 },
+            { q: "Quelle pièce permet de voir qui bouge en temps réel sur une carte ?", options: ["Sécurité", "Administration", "Infirmerie", "O2"], answer: 1 },
+            { q: "Que devez-vous faire si l'imposteur sabote le réacteur ?", options: ["Attendre", "Aller le réparer vite", "Voter", "Courir à la Cafétéria"], answer: 1 },
+            { q: "De quelle couleur est le bouton pour signaler un corps ?", options: ["Gris", "Vert", "Bleu", "Mégaphone Rouge"], answer: 3 },
+            { q: "Quelle tâche de l'infirmerie prouve visuellement que vous êtes innocent ?", options: ["Prendre des pilules", "Le MedBay Scan", "Ranger les dossiers", "Laver les éprouvettes"], answer: 1 },
+            { q: "Comment s'appellent les gentils dans le jeu ?", options: ["Innocents", "Humains", "Crewmates", "Astronautes"], answer: 2 },
+            { q: "Quelle est la couleur du texte quand vous êtes choisi comme Imposteur ?", options: ["Rouge", "Noir", "Violet", "Blanc"], answer: 0 }
+        ],
+        normal: [
+            { q: "Sur The Skeld, combien de caméras de sécurité y a-t-il au total ?", options: ["3", "4", "5", "6"], answer: 1 },
+            { q: "Laquelle de ces maps se déroule entièrement sur une base volante ?", options: ["Polus", "Mira HQ", "The Skeld", "Airship"], answer: 1 },
+            { q: "Quel sabotage peut fermer complètement les portes d'une pièce ?", options: ["Lumières", "Portes", "Comms", "Réacteur"], answer: 1 },
+            { q: "Quelle tâche nécessite d'attendre exactement 60 secondes pour la terminer ?", options: ["Inspecter les éprouvettes", "Télécharger les données", "Vider les poubelles", "Calibrer le distributeur"], answer: 0 },
+            { q: "Quel outil sur Polus permet de voir si les joueurs sont en vie ou morts ?", options: ["Les Caméras", "La carte Admin", "Le Vital Sign (Vitals)", "Le radar"], answer: 2 },
+            { q: "Que se passe-t-il si les Communications sont sabotées ?", options: ["On meurt", "La liste des tâches disparaît", "Le jeu freeze", "Les portes se bloquent"], answer: 1 },
+            { q: "Combien de temps dure le rechargement du kill (Kill Cooldown) de base ?", options: ["10s", "45s", "25s", "60s"], answer: 2 },
+            { q: "Sur la map Airship, quel moyen de transport permet de passer d'une plateforme à une autre ?", options: ["Une échelle", "Une plateforme mouvante", "Une tyrolienne", "Un téléporteur"], answer: 1 },
+            { q: "Quelle pièce n'existe PAS sur la map Polus ?", options: ["Spécimens", "Laboratoire", "Armurerie (Weapons)", "Bureau (Office)"], answer: 2 },
+            { q: "De quel jeu célèbre proviennent les cosmétiques de la map Airship ?", options: ["Henry Stickmin", "Minecraft", "Fortnite", "Fall Guys"], answer: 0 },
+            { q: "Quel rôle secondaire peut protéger un Crewmate d'un kill ?", options: ["Scientifique", "Ange Gardien", "Ingénieur", "Métamorphe"], answer: 1 },
+            { q: "Combien d'interrupteurs faut-il remettre en place pour réparer les lumières ?", options: ["3", "4", "5", "6"], answer: 2 },
+            { q: "Sur Mira HQ, quelle est la particularité unique du système de ventilations ?", options: ["Elles tuent les joueurs", "Elles sont toutes reliées entre elles", "Elles sont bloquées", "Il n'y en a pas"], answer: 1 },
+            { q: "Quel rôle secondaire permet de réparer/consulter les Vitals n'importe où ?", options: ["Scientifique", "Ingénieur", "Ange", "Imposteur"], answer: 0 },
+            { q: "Comment s'appelle le mini-jeu où il faut aligner un cercle qui tourne à l'Électricité ?", options: ["Détourner l'énergie", "Calibrer le distributeur", "Fixer le câblage", "Nettoyer le filtre"], answer: 1 }
+        ],
+        hard: [
+            { q: "Quel est le nom officiel de l'espèce extraterrestre des Imposteurs selon le lore ?", options: ["Parasite Métamorphe", "Anomalie d'O2", "Infection Alpha", "Inconnu"], answer: 0 },
+            { q: "Dans quelle pièce exacte de The Skeld se trouve la grille d'aération qui mène DIRECTEMENT à la Sécurité ?", options: ["Électricité", "Infirmerie", "Réacteur", "Couloir de gauche"], answer: 2 },
+            { q: "Combien de capteurs de mouvement ('Sensor Logs') possède la map Mira HQ pour suivre les joueurs ?", options: ["2", "3", "4", "5"], answer: 1 },
+            { q: "Sur Polus, combien de clés différentes peuvent être attribuées pour la tâche des clés à l'Office ?", options: ["4", "5", "6", "8"], answer: 1 },
+            { q: "Dans la tâche 'Fix Weather Node' sur Polus, combien de labyrinthes différents existent ?", options: ["4", "6", "8", "12"], answer: 1 },
+            { q: "Quel est le poids exact affiché lors du MedBay Scan d'un Crewmate standard ?", options: ["92 lbs", "110 lbs", "132 lbs", "150 lbs"], answer: 0 },
+            { q: "En quelle année précise le jeu Among Us est-il sorti pour la toute première fois ?", options: ["2017", "2018", "2019", "2020"], answer: 1 },
+            { q: "Sur la map Airship, combien de secondes d'autonomie possède la batterie du Scientifique ?", options: ["15s", "30s", "45s", "Illimité"], answer: 0 },
+            { q: "Quelle est la tâche commune (Common Task) sur The Skeld qui force TOUT LE MONDE à l'avoir ?", options: ["Vider les poubelles", "Inspecter les éprouvettes", "Swipe Card / Carte Admin", "Fixer le câblage"], answer: 2 },
+            { q: "Comment s'appelle le mode de jeu officiel sorti fin 2022 où l'Imposteur traque les Crewmates en continu ?", options: ["Hide and Seek", "Deathmatch", "Survival", "Zombies"], answer: 0 },
+            { q: "Quel est le nom du studio indépendant qui a développé Among Us ?", options: ["InnerSloth", "Epic Games", "Supercell", "Chucklefish"], answer: 0 },
+            { q: "Quelle pièce de l'Airship contient le plus grand nombre de tâches différentes ?", options: ["Cockpit", "Armurerie", "Coffre-fort (Vault)", "Cuisine"], answer: 2 },
+            { q: "Quel est le code couleur hexadécimal exact du 'Red' original d'Among Us ?", options: ["#FF0000", "#C51111", "#ED4245", "#9B0000"], answer: 1 },
+            { q: "Sur Polus, dans quelle direction s'échappe la fumée du laboratoire ?", options: ["Vers le haut", "Vers le bas", "Vers la droite", "Il n'y a pas de fumée"], answer: 2 },
+            { q: "Quel rôle d'Imposteur permet de prendre l'apparence physique d'un autre joueur ?", options: ["Métamorphe (Shapeshifter)", "Fantôme", "Illusionniste", "Traître"], answer: 0 },
+            { q: "Quelle est la tâche la plus longue de l'Airship ?", options: ["Démarrer les hélices", "Nettoyer les toilettes", "Faire les burgers", "Ouvrir les coffres"], answer: 1 },
+            { q: "Combien de temps met un sabotage d'O2 pour tuer tout le monde s'il n'est pas réparé sur The Skeld ?", options: ["30 secondes", "40 secondes", "45 secondes", "60 secondes"], answer: 0 },
+            { q: "Sur la map The Fungle, quelle plante provoque des hallucinations ou cache la vision ?", options: ["Les fougères", "Les champignons / Spores", "Les lianes", "Les cactus"], answer: 1 },
+            { q: "Quel cosmétique unique s'obtient uniquement en terminant le pass d'Henry Stickmin ?", options: ["Chapeau de Ellie", "Le familier Robot", "Le déguisement de Charles", "Le chapeau Haut-de-forme"], answer: 2 },
+            { q: "Quel fil électrique ne fait JAMAIS partie de la tâche 'Fix Wiring' ?", options: ["Jaune", "Vert", "Bleu", "Rose"], answer: 1 }
+        ]
+    };
 
+    let quizActiveList = [];
     let currentQuestionIndex = 0;
     let score = 0;
+
+    function startQuiz(difficulty) {
+        quizActiveList = allQuestions[difficulty];
+        currentQuestionIndex = 0;
+        score = 0;
+        
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("quiz-screen").style.display = "block";
+        
+        showQuestion();
+    }
 
     function showQuestion() {
         const qElement = document.getElementById("question");
         const optionsElement = document.getElementById("options");
         const resultElement = document.getElementById("result");
+        const progressElement = document.getElementById("progress");
         
         resultElement.innerText = "";
         optionsElement.innerHTML = "";
         
-        let currentQ = questions[currentQuestionIndex];
+        progressElement.innerText = `Question ${currentQuestionIndex + 1} / ${quizActiveList.length}`;
+        
+        let currentQ = quizActiveList[currentQuestionIndex];
         qElement.innerText = currentQ.q;
         
         currentQ.options.forEach((option, index) => {
@@ -105,47 +180,39 @@
 
     function checkAnswer(selectedIndex) {
         const resultElement = document.getElementById("result");
-        let currentQ = questions[currentQuestionIndex];
+        let currentQ = quizActiveList[currentQuestionIndex];
         
         if (selectedIndex === currentQ.answer) {
             score++;
             resultElement.style.color = "#57f287";
-            resultElement.innerText = "✅ Bonne réponse ! Tu es un vrai Crewmate.";
+            resultElement.innerText = "✅ Bonne réponse !";
         } else {
             resultElement.style.color = "#ed4245";
-            resultElement.innerText = "❌ Mauvaise réponse... L'imposteur t'a éliminé !";
+            resultElement.innerText = "❌ Mauvaise réponse... L'imposteur approche !";
         }
         
         currentQuestionIndex++;
         
+        // Bloquer les boutons pendant la transition
+        const buttons = document.querySelectorAll("#options .btn");
+        buttons.forEach(b => b.disabled = true);
+        
         setTimeout(() => {
-            if (currentQuestionIndex < questions.length) {
+            if (currentQuestionIndex < quizActiveList.length) {
                 showQuestion();
             } else {
                 endQuiz();
             }
-        }, 2000);
+        }, 1500);
     }
 
     function endQuiz() {
-        const quizElement = document.getElementById("quiz");
-        const titleElement = document.getElementById("title");
-        const resultElement = document.getElementById("result");
-        
-        quizElement.innerHTML = "";
-        titleElement.innerText = "🏁 FIN DE LA PARTIE";
-        
-        if (score === questions.length) {
-            resultElement.style.color = "#57f287";
-            resultElement.innerHTML = `🏆 **Victoire !** Tu as démasqué tous les imposteurs !<br>Score : ${score}/${questions.length}`;
-        } else {
-            resultElement.style.color = "#ffaa00";
-            resultElement.innerHTML = `🛸 **Éjecté dans l'espace...** Tu feras mieux la prochaine fois.<br>Score : ${score}/${questions.length}`;
-        }
+        document.getElementById("quiz-screen").innerHTML = `
+            <h2 style="color: #fec20c;">🏁 FIN DU QUIZ</h2>
+            <p style="font-size: 20px;">Votre score final est de : <strong style="color:#57f287;">${score}</strong> / ${quizActiveList.length}</p>
+            <button class="btn" style="background-color: #5865F2; margin-top:20px;" onclick="location.reload()">🔄 Rejouer</button>
+        `;
     }
-
-    // Lancement du jeu au chargement
-    showQuestion();
 </script>
 
 </body>
