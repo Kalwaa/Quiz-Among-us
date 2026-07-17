@@ -1,1 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Among Us - Le Quiz</title>
+    <style>
+        body {
+            background-color: #111424;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .quiz-container {
+            background-color: #1b1f38;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            width: 450px;
+            text-align: center;
+            border: 2px solid #ed4245;
+        }
+        h1 {
+            color: #ed4245;
+            margin-top: 0;
+        }
+        .btn {
+            background-color: #2f3556;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            margin: 8px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        .btn:hover {
+            background-color: #ed4245;
+        }
+        #result {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
 
+<div class="quiz-container">
+    <h1 id="title">🚨 QUIZ AMONG US 🚨</h1>
+    <div id="quiz">
+        <p id="question" style="font-size: 18px; font-weight: bold;"></p>
+        <div id="options"></div>
+    </div>
+    <div id="result"></div>
+</div>
+
+<script>
+    const questions = [
+        {
+            q: "Quelle est la map originale d'Among Us ?",
+            options: ["The Skeld", "Mira HQ", "Polus", "The Fungle"],
+            answer: 0
+        },
+        {
+            q: "Où se trouve le bouton de l'Emergency Meeting sur The Skeld ?",
+            options: ["À l'Électricité", "À la Cafétéria", "À l'Administration", "Aux Réacteurs"],
+            answer: 1
+        },
+        {
+            q: "Quelle couleur de Crewmate est historiquement souvent accusée d'être l'Imposteur (le mème) ?",
+            options: ["Bleu", "Vert", "Rouge", "Jaune"],
+            answer: 2
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    function showQuestion() {
+        const qElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const resultElement = document.getElementById("result");
+        
+        resultElement.innerText = "";
+        optionsElement.innerHTML = "";
+        
+        let currentQ = questions[currentQuestionIndex];
+        qElement.innerText = currentQ.q;
+        
+        currentQ.options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.innerText = option;
+            button.classList.add("btn");
+            button.onclick = () => checkAnswer(index);
+            optionsElement.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selectedIndex) {
+        const resultElement = document.getElementById("result");
+        let currentQ = questions[currentQuestionIndex];
+        
+        if (selectedIndex === currentQ.answer) {
+            score++;
+            resultElement.style.color = "#57f287";
+            resultElement.innerText = "✅ Bonne réponse ! Tu es un vrai Crewmate.";
+        } else {
+            resultElement.style.color = "#ed4245";
+            resultElement.innerText = "❌ Mauvaise réponse... L'imposteur t'a éliminé !";
+        }
+        
+        currentQuestionIndex++;
+        
+        setTimeout(() => {
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                endQuiz();
+            }
+        }, 2000);
+    }
+
+    function endQuiz() {
+        const quizElement = document.getElementById("quiz");
+        const titleElement = document.getElementById("title");
+        const resultElement = document.getElementById("result");
+        
+        quizElement.innerHTML = "";
+        titleElement.innerText = "🏁 FIN DE LA PARTIE";
+        
+        if (score === questions.length) {
+            resultElement.style.color = "#57f287";
+            resultElement.innerHTML = `🏆 **Victoire !** Tu as démasqué tous les imposteurs !<br>Score : ${score}/${questions.length}`;
+        } else {
+            resultElement.style.color = "#ffaa00";
+            resultElement.innerHTML = `🛸 **Éjecté dans l'espace...** Tu feras mieux la prochaine fois.<br>Score : ${score}/${questions.length}`;
+        }
+    }
+
+    // Lancement du jeu au chargement
+    showQuestion();
+</script>
+
+</body>
+</html>
